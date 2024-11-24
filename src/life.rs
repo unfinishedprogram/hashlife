@@ -6,7 +6,7 @@ mod pack_unpack;
 pub mod print;
 mod tree;
 
-use cell::Cell;
+use cell::{Cell, CompositeCell};
 use cell_id::CellId;
 use layer::Layer;
 
@@ -52,6 +52,24 @@ impl Life {
     pub fn get_cell(&self, cell_id: CellId) -> Option<&Cell> {
         self.layers.get(cell_id.layer())?.get_cell(cell_id.index())
     }
+
+    pub fn step(&mut self) {}
+
+    pub fn padded(&mut self, cell_id: CellId) -> CellId {
+        if let Cell::Composite(cell) = self.get_cell(cell_id).unwrap().clone() {
+            let empty = self.empty_of_layer((cell_id.layer() - 1) as u8);
+
+            let nw = self.join(empty, empty, empty, cell.nw);
+            let ne = self.join(empty, empty, cell.ne, empty);
+            let sw = self.join(empty, cell.sw, empty, empty);
+            let se = self.join(cell.se, empty, empty, empty);
+
+            self.join(nw, ne, sw, se)
+        } else {
+            let empty = self.empty_of_layer(0);
+            self.join(cell_id, empty, empty, empty)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -86,5 +104,17 @@ mod tests {
         assert_eq!(life.get_cell(empty_0).unwrap().depth(), 0);
         assert_eq!(life.get_cell(empty_1).unwrap().depth(), 1);
         assert_eq!(life.get_cell(empty_2).unwrap().depth(), 2);
+    }
+
+    #[test]
+    fn padding_works() {
+        let mut life = Life::new(8);
+
+        let empty = life.empty_of_layer(0);
+        assert_eq!(empty.layer(), 0);
+        let padded_1 = life.padded(empty);
+        assert_eq!(padded_1.layer(), 1);
+        let padded_2 = life.padded(padded_1);
+        assert_eq!(padded_2.layer(), 2);
     }
 }
