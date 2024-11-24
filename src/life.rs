@@ -66,15 +66,7 @@ impl Life {
             Cell::Base(cell::BaseCell::Alive) => 1,
             Cell::Base(cell::BaseCell::Dead) => 0,
             Cell::Composite(cell) => {
-                let nw = self.get_cell(cell.nw).unwrap();
-                let ne = self.get_cell(cell.ne).unwrap();
-                let sw = self.get_cell(cell.sw).unwrap();
-                let se = self.get_cell(cell.se).unwrap();
-
-                self.alive_count(nw)
-                    + self.alive_count(ne)
-                    + self.alive_count(sw)
-                    + self.alive_count(se)
+                cell.nw.alive() + cell.ne.alive() + cell.sw.alive() + cell.se.alive()
             }
         }
     }
