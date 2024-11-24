@@ -15,19 +15,13 @@ pub enum BaseCell {
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct CompositeCell {
     depth: u8,
-    nw: CellId,
-    ne: CellId,
-    sw: CellId,
-    se: CellId,
+    pub(crate) nw: CellId,
+    pub(crate) ne: CellId,
+    pub(crate) sw: CellId,
+    pub(crate) se: CellId,
 }
 
 impl Cell {
-    pub fn depth(&self) -> u8 {
-        match self {
-            Cell::Base(_) => 0,
-            Cell::Composite(CompositeCell { depth, .. }) => *depth,
-        }
-    }
     pub fn composite(depth: u8, nw: CellId, ne: CellId, sw: CellId, se: CellId) -> Self {
         Cell::Composite(CompositeCell {
             depth,
@@ -36,5 +30,12 @@ impl Cell {
             sw,
             se,
         })
+    }
+
+    pub fn depth(&self) -> u8 {
+        match self {
+            Cell::Base(_) => 0,
+            Cell::Composite(CompositeCell { depth, .. }) => *depth,
+        }
     }
 }

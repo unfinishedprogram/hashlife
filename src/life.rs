@@ -2,10 +2,13 @@ mod cell;
 mod cell_id;
 mod import;
 mod layer;
+mod pack_unpack;
+mod tree;
+
+use std::collections::HashMap;
 
 use cell::Cell;
 use cell_id::CellId;
-use import::CellPosition;
 use layer::Layer;
 
 pub struct Life {
@@ -14,15 +17,6 @@ pub struct Life {
 }
 
 impl Life {
-    pub fn from_cells(max_depth: u8, cells: Vec<CellPosition>) {
-        let mut life = Life::new(max_depth);
-
-        for cell in cells {
-            let cell = Cell::Base(cell::BaseCell::Alive);
-            life.add_cell(cell);
-        }
-    }
-
     pub fn new(max_depth: u8) -> Self {
         let mut layers = Vec::new();
 
