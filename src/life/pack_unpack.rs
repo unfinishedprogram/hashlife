@@ -56,13 +56,26 @@ impl Life {
         life
     }
 
-    pub fn cell_positions(&self) -> Vec<(i32, i32)> {
+    pub fn cell_positions(&self, max_depth: u8) -> Vec<(i32, i32)> {
         let mut positions = Vec::new();
-        self.unpack_cells(&mut positions, self.root, (0, 0));
+        self.unpack_cells(max_depth, &mut positions, self.root, (0, 0));
         positions
     }
 
-    fn unpack_cells(&self, cells: &mut Vec<(i32, i32)>, cell: CellId, (x, y): (i32, i32)) {
+    fn unpack_cells(
+        &self,
+        max_depth: u8,
+        cells: &mut Vec<(i32, i32)>,
+        cell: CellId,
+        (x, y): (i32, i32),
+    ) {
+        if cell.layer() <= max_depth as usize {
+            if cell.alive() > 0 {
+                cells.push((x, y));
+            }
+            return;
+        }
+
         let cell = self.get_cell(cell).unwrap();
         match cell {
             Cell::Base(BaseCell::Alive) => {
@@ -70,11 +83,19 @@ impl Life {
             }
             Cell::Base(BaseCell::Dead) => {}
             Cell::Composite(CompositeCell { nw, ne, sw, se, .. }) => {
-                let half = 1 << (cell.depth() - 1);
-                self.unpack_cells(cells, *nw, (x, y));
-                self.unpack_cells(cells, *ne, (x + half, y));
-                self.unpack_cells(cells, *sw, (x, y + half));
-                self.unpack_cells(cells, *se, (x + half, y + half));
+                let half = 1 << (cell.depth() - 1 - max_depth);
+                if nw.alive() > 0 {
+                    self.unpack_cells(max_depth, cells, *nw, (x, y));
+                }
+                if ne.alive() > 0 {
+                    self.unpack_cells(max_depth, cells, *ne, (x + half, y));
+                }
+                if sw.alive() > 0 {
+                    self.unpack_cells(max_depth, cells, *sw, (x, y + half));
+                }
+                if se.alive() > 0 {
+                    self.unpack_cells(max_depth, cells, *se, (x + half, y + half));
+                }
             }
         }
     }
@@ -89,7 +110,7 @@ pub mod test {
     fn test_pack_unpack() {
         let points = vec![(0, 0), (1, 0), (0, 1), (1, 1), (2, 2), (31, 7)];
         let life = Life::from_cell_positions(8, points.clone());
-        let unpacked = life.cell_positions();
+        let unpacked = life.cell_positions(8);
 
         let expected: HashSet<(i32, i32)> = HashSet::from_iter(points);
         let actual = HashSet::from_iter(unpacked);
