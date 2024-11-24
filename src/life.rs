@@ -3,9 +3,8 @@ mod cell_id;
 mod import;
 mod layer;
 mod pack_unpack;
+pub mod print;
 mod tree;
-
-use std::collections::HashMap;
 
 use cell::Cell;
 use cell_id::CellId;
