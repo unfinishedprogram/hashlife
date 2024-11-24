@@ -6,7 +6,7 @@ mod pack_unpack;
 pub mod print;
 mod tree;
 
-use cell::{Cell, CompositeCell};
+use cell::Cell;
 use cell_id::CellId;
 use layer::Layer;
 
@@ -53,7 +53,13 @@ impl Life {
         self.layers.get(cell_id.layer())?.get_cell(cell_id.index())
     }
 
-    pub fn step(&mut self) {}
+    pub fn step(&mut self) {
+        while self.root.layer() < 2 {
+            self.root = self.padded(self.root)
+        }
+        self.root = self.padded(self.root);
+        self.root = self.next_generation(self.root);
+    }
 
     pub fn padded(&mut self, cell_id: CellId) -> CellId {
         if let Cell::Composite(cell) = self.get_cell(cell_id).unwrap().clone() {
@@ -69,6 +75,134 @@ impl Life {
             let empty = self.empty_of_layer(0);
             self.join(cell_id, empty, empty, empty)
         }
+    }
+
+    pub fn next_generation(&mut self, cell_id: CellId) -> CellId {
+        if cell_id.layer() < 2 {
+            unreachable!("Next generation should never be called with a base layer cell");
+        }
+
+        if let Some(next_gen_id) = self.layers[cell_id.layer()].get_next_gen(cell_id) {
+            return *next_gen_id;
+        }
+
+        if cell_id.layer() == 2 {
+            let cell = self.get_cell(cell_id).unwrap().as_composite();
+            let res = self.next_generation_base_case(cell.nw, cell.ne, cell.sw, cell.se);
+            self.layers[cell_id.layer()].cache_next_gen(cell_id, res);
+            return res;
+        }
+
+        let cell = self.get_cell(cell_id).unwrap().as_composite();
+
+        let nw = cell.nw;
+        let ne = cell.ne;
+        let sw = cell.sw;
+        let se = cell.se;
+
+        let n00 = self.centered_subnode(nw);
+        let n01 = self.centered_horizontal(nw, ne);
+        let n02 = self.centered_subnode(ne);
+        let n10 = self.centered_vertical(nw, sw);
+        let n11 = self.centered_sub_subnode(nw, ne, sw, se);
+        let n12 = self.centered_vertical(ne, se);
+        let n20 = self.centered_subnode(sw);
+        let n21 = self.centered_horizontal(sw, se);
+        let n22 = self.centered_subnode(se);
+
+        let nw = self.join(n00, n01, n10, n11);
+        let ne = self.join(n01, n02, n11, n12);
+        let sw = self.join(n10, n11, n20, n21);
+        let se = self.join(n11, n12, n21, n22);
+
+        let nw = self.next_generation(nw);
+        let ne = self.next_generation(ne);
+        let sw = self.next_generation(sw);
+        let se = self.next_generation(se);
+
+        let res = self.join(nw, ne, sw, se);
+
+        assert_eq!(res.layer(), cell_id.layer() - 1);
+
+        self.layers[cell_id.layer()].cache_next_gen(cell_id, res);
+        res
+    }
+
+    // Takes 4 2x2 nodes and returns the new 2x2 center node
+    fn next_generation_base_case(
+        &mut self,
+        nw: CellId,
+        ne: CellId,
+        sw: CellId,
+        se: CellId,
+    ) -> CellId {
+        debug_assert_eq!(nw.layer(), 1);
+        debug_assert_eq!(ne.layer(), 1);
+        debug_assert_eq!(sw.layer(), 1);
+        debug_assert_eq!(se.layer(), 1);
+
+        let base_alive = self.add_cell(Cell::Base(cell::BaseCell::Alive));
+        let base_dead = self.add_cell(Cell::Base(cell::BaseCell::Dead));
+
+        let nw = self.get_cell(nw).unwrap().as_composite();
+        let ne = self.get_cell(ne).unwrap().as_composite();
+        let sw = self.get_cell(sw).unwrap().as_composite();
+        let se = self.get_cell(se).unwrap().as_composite();
+
+        let cells = [
+            [
+                nw.nw == base_alive,
+                nw.ne == base_alive,
+                ne.nw == base_alive,
+                ne.ne == base_alive,
+            ],
+            [
+                nw.sw == base_alive,
+                nw.se == base_alive,
+                ne.sw == base_alive,
+                ne.se == base_alive,
+            ],
+            [
+                sw.nw == base_alive,
+                sw.ne == base_alive,
+                se.nw == base_alive,
+                se.ne == base_alive,
+            ],
+            [
+                sw.sw == base_alive,
+                sw.se == base_alive,
+                se.sw == base_alive,
+                se.se == base_alive,
+            ],
+        ];
+
+        let [nw, ne, sw, se] = [(1, 1), (2, 1), (1, 2), (2, 2)].map(|(x, y)| {
+            let alive = cells[y][x];
+
+            let directions: [(i32, i32); 8] = [
+                (-1, -1),
+                (0, -1),
+                (1, -1),
+                (-1, 0),
+                (1, 0),
+                (-1, 1),
+                (0, 1),
+                (1, 1),
+            ];
+
+            let surrounding: u32 = directions
+                .map(|(dx, dy)| cells[(y as i32 + dy) as usize][(x as i32 + dx) as usize] as u32)
+                .iter()
+                .sum();
+
+            if surrounding == 3 || alive && surrounding == 2 {
+                base_alive
+            } else {
+                base_dead
+            }
+        });
+
+        self.join(nw, ne, sw, se)
     }
 }
 

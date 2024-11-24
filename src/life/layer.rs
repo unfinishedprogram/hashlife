@@ -1,11 +1,12 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-use super::cell::Cell;
+use super::{cell::Cell, cell_id::CellId};
 
+#[derive(Debug)]
 pub struct Layer {
     cells: Vec<Cell>,
     cells_index_lookup: HashMap<Cell, usize>,
-    next_gen: HashMap<Cell, Cell>,
+    next_gen: HashMap<CellId, CellId>,
 }
 
 impl Layer {
@@ -31,5 +32,13 @@ impl Layer {
 
     pub fn get_cell(&self, index: usize) -> Option<&Cell> {
         self.cells.get(index)
+    }
+
+    pub fn get_next_gen(&self, cell_id: CellId) -> Option<&CellId> {
+        self.next_gen.get(&cell_id)
+    }
+
+    pub fn cache_next_gen(&mut self, cell_id: CellId, new_cell_id: CellId) {
+        self.next_gen.insert(cell_id, new_cell_id);
     }
 }
