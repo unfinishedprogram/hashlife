@@ -1,30 +1,20 @@
-use life::{
-    print::{print_positions, print_positions_brail},
-    Life,
-};
+use life::{import::rle_to_cell_positions, print::print_positions, Life};
 
 mod life;
 
 fn main() {
-    let acorn = vec![(0, 0), (1, 0), (1, 2), (3, 1), (4, 0), (5, 0), (6, 0)];
-    let still = vec![
-        (0, 0),
-        (1, 0),
-        (0, 1),
-        (1, 1),
-        (2, 2),
-        (2, 3),
-        (3, 2),
-        (3, 3),
-    ];
+    println!("Starting");
+    let pattern = rle_to_cell_positions(include_str!("./life.rle").to_string(), 0, 0);
+    println!("Converted pattern");
+    let mut life = Life::from_cell_positions(32, pattern);
 
-    // Acorn
-    let mut life = Life::from_cell_positions(32, still);
+    for _ in 0..10000 {
+        println!("Stepping");
 
-    // dbg!(&life.layers);
-
-    for i in 0..100 {
         life.step();
-        print_positions_brail(life.cell_positions());
+        print!("{}[2J", 27 as char);
+        print_positions(life.cell_positions());
+        println!("Alive: {}", life.root.alive());
+        life.print_stats();
     }
 }

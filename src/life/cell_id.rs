@@ -2,11 +2,16 @@
 pub struct CellId {
     layer: usize,
     index: usize,
+    alive: usize,
 }
 
 impl CellId {
-    pub fn new(layer: usize, index: usize) -> Self {
-        CellId { layer, index }
+    pub fn new(layer: usize, index: usize, alive: usize) -> Self {
+        CellId {
+            layer,
+            index,
+            alive,
+        }
     }
 
     pub fn layer(&self) -> usize {
@@ -15,5 +20,9 @@ impl CellId {
 
     pub fn index(&self) -> usize {
         self.index
+    }
+
+    pub fn alive(&self) -> usize {
+        self.alive
     }
 }

@@ -39,13 +39,6 @@ impl Cell {
         }
     }
 
-    pub fn as_base(&self) -> &BaseCell {
-        match self {
-            Cell::Base(cell) => cell,
-            _ => panic!("Cell is not base"),
-        }
-    }
-
     pub fn depth(&self) -> u8 {
         match self {
             Cell::Base(_) => 0,

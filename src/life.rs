@@ -1,6 +1,6 @@
 mod cell;
 mod cell_id;
-mod import;
+pub mod import;
 mod layer;
 mod pack_unpack;
 pub mod print;
@@ -24,12 +24,24 @@ impl Life {
         }
         let mut res = Life {
             layers,
-            root: CellId::new(0, 0),
+            root: CellId::new(0, 0, 0),
         };
 
         let root = res.empty_of_layer(0);
         res.root = root;
         res
+    }
+
+    pub fn print_stats(&self) {
+        let mut total = 0;
+        for (i, layer) in self.layers.iter().enumerate() {
+            if layer.size() == 0 {
+                break;
+            }
+            total += layer.size();
+            println!("Layer {}: {}", i, layer.size());
+        }
+        println!("Total: {}", total);
     }
 
     fn empty_of_layer(&mut self, layer: u8) -> CellId {
@@ -44,9 +56,27 @@ impl Life {
 
     pub fn add_cell(&mut self, cell: Cell) -> CellId {
         let layer = cell.depth() as usize;
+        let alive = self.alive_count(&cell);
         let index = self.layers[layer].add_cell(cell);
+        CellId::new(layer, index, alive)
+    }
 
-        CellId::new(layer, index)
+    pub fn alive_count(&self, cell: &Cell) -> usize {
+        match cell {
+            Cell::Base(cell::BaseCell::Alive) => 1,
+            Cell::Base(cell::BaseCell::Dead) => 0,
+            Cell::Composite(cell) => {
+                let nw = self.get_cell(cell.nw).unwrap();
+                let ne = self.get_cell(cell.ne).unwrap();
+                let sw = self.get_cell(cell.sw).unwrap();
+                let se = self.get_cell(cell.se).unwrap();
+
+                self.alive_count(nw)
+                    + self.alive_count(ne)
+                    + self.alive_count(sw)
+                    + self.alive_count(se)
+            }
+        }
     }
 
     pub fn get_cell(&self, cell_id: CellId) -> Option<&Cell> {
@@ -54,10 +84,11 @@ impl Life {
     }
 
     pub fn step(&mut self) {
-        while self.root.layer() < 2 {
-            self.root = self.padded(self.root)
+        while !self.is_padded(self.root) {
+            self.root = self.padded(self.root);
         }
         self.root = self.padded(self.root);
+
         self.root = self.next_generation(self.root);
     }
 
@@ -75,6 +106,12 @@ impl Life {
             let empty = self.empty_of_layer(0);
             self.join(cell_id, empty, empty, empty)
         }
+    }
+
+    fn is_padded(&mut self, cell_id: CellId) -> bool {
+        let total = cell_id.alive();
+        let center = self.centered_subnode(cell_id).alive();
+        total - center == 0
     }
 
     pub fn next_generation(&mut self, cell_id: CellId) -> CellId {

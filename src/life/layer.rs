@@ -18,6 +18,10 @@ impl Layer {
         }
     }
 
+    pub fn size(&self) -> usize {
+        self.cells.len()
+    }
+
     pub fn add_cell(&mut self, cell: Cell) -> usize {
         if let Some(index) = self.cells_index_lookup.get(&cell) {
             return *index;
