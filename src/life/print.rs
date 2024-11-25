@@ -1,4 +1,4 @@
-pub fn print_positions(positions: Vec<(i32, i32)>) {
+pub fn print_positions(positions: Vec<(i32, i32)>) -> String {
     let mut min_x = i32::MAX;
     let mut max_x = i32::MIN;
     let mut min_y = i32::MAX;
@@ -46,12 +46,14 @@ pub fn print_positions(positions: Vec<(i32, i32)>) {
         *c |= mask;
     }
 
+    let mut res = String::new();
+
     for row in grid {
         for c in row {
-            print!("{}", std::char::from_u32(0x2800 + c as u32).unwrap());
+            res.push(std::char::from_u32(0x2800 + c as u32).unwrap());
         }
-        println!();
+        res += "\n";
     }
 
-    // group into 2x8 blocks for conversion to brail unicode
+    res
 }
