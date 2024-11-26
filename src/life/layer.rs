@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{cell::Cell, cell_id::CellId};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Layer {
     cells: Vec<Cell>,
     cells_index_lookup: HashMap<Cell, usize>,

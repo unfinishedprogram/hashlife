@@ -10,6 +10,7 @@ use cell::Cell;
 use cell_id::CellId;
 use layer::Layer;
 
+#[derive(Clone)]
 pub struct Life {
     pub root: CellId,
     pub layers: Vec<Layer>,
@@ -30,6 +31,11 @@ impl Life {
         let root = res.empty_of_layer(0);
         res.root = root;
         res
+    }
+
+    pub fn from_rle(rle: &str) -> Self {
+        let pattern = import::rle_to_cell_positions(rle.to_string(), 0, 0);
+        Life::from_cell_positions(32, pattern)
     }
 
     pub fn print_stats(&self) {

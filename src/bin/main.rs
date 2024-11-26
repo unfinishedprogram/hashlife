@@ -1,15 +1,11 @@
 use std::io::{stdout, Write};
 
-use life::{import::rle_to_cell_positions, print::print_positions, Life};
-
-mod life;
+use hashlife::life::{print::print_positions, Life};
 
 fn main() {
     println!("Starting");
-    let pattern = rle_to_cell_positions(include_str!("./life.rle").to_string(), 0, 0);
-    println!("Converted pattern");
 
-    let mut life = Life::from_cell_positions(32, pattern);
+    let mut life = Life::from_rle(include_str!("../../patterns/clock.rle"));
     let clear_char = "\x1b[2J\x1b[1;1H".to_string();
 
     loop {
