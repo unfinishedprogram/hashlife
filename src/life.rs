@@ -21,7 +21,7 @@ impl Life {
         let mut layers = Vec::new();
 
         for _ in 0..max_depth {
-            layers.push(Layer::new());
+            layers.push(Layer::default());
         }
         let mut res = Life {
             layers,

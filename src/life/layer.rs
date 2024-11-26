@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{cell::Cell, cell_id::CellId};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Layer {
     cells: Vec<Cell>,
     cells_index_lookup: HashMap<Cell, usize>,
@@ -10,14 +10,6 @@ pub struct Layer {
 }
 
 impl Layer {
-    pub fn new() -> Self {
-        Layer {
-            cells: vec![],
-            cells_index_lookup: HashMap::new(),
-            next_gen: HashMap::new(),
-        }
-    }
-
     pub fn size(&self) -> usize {
         self.cells.len()
     }
