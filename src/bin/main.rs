@@ -23,7 +23,7 @@ fn main() {
     enable_raw_mode().unwrap();
 
     loop {
-        while poll(Duration::from_millis(1)).unwrap() {
+        while poll(Duration::from_millis(0)).unwrap() {
             match read().unwrap() {
                 Event::Key(key_event) => life_viewer.on_key(key_event),
                 Event::Resize(x, y) => life_viewer.resize((x, y)),
@@ -31,23 +31,13 @@ fn main() {
             }
         }
 
-        let start = std::time::Instant::now();
-        life_viewer.step();
-
         let mut stdout = stdout.lock();
 
         stdout.queue(BeginSynchronizedUpdate).unwrap();
         stdout.queue(Clear(ClearType::All)).unwrap();
-        life_viewer.render(&mut stdout);
+        life_viewer.step(&mut stdout);
 
-        queue!(
-            stdout,
-            MoveTo(0, 0),
-            // Print(&format!("Alive: {}\n", life.root.alive())),
-            // Print(&format!("Step time: {:?}\n", start.elapsed())),
-            EndSynchronizedUpdate,
-        )
-        .unwrap();
+        queue!(stdout, MoveTo(0, 0), EndSynchronizedUpdate,).unwrap();
 
         stdout.flush().unwrap();
     }

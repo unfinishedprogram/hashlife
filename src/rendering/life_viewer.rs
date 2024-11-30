@@ -1,5 +1,10 @@
+use std::io::StdoutLock;
+
 use crossterm::{
+    cursor::MoveTo,
     event::{KeyCode, KeyEvent, KeyEventKind},
+    queue,
+    style::Print,
     terminal::disable_raw_mode,
 };
 
@@ -25,7 +30,7 @@ pub struct LifeViewer {
 
 impl LifeViewer {
     pub fn new(term_size: (u16, u16), life: Life) -> Self {
-        LifeViewer {
+        let mut res = LifeViewer {
             life,
             term_size,
             running_state: RunningState::Paused,
@@ -34,7 +39,14 @@ impl LifeViewer {
             cell_offset_x: 0,
             cell_offset_y: 0,
             speed: 4,
-        }
+        };
+        res.center_on_zero_zero();
+        res
+    }
+
+    fn center_on_zero_zero(&mut self) {
+        self.cell_offset_x = self.pixel_scale() * (self.canvas.size().0 as i32) / 2;
+        self.cell_offset_y = self.pixel_scale() * (self.canvas.size().1 as i32) / 2;
     }
 
     pub fn resize(&mut self, term_size: (u16, u16)) {
@@ -90,17 +102,36 @@ impl LifeViewer {
         }
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self, output: &mut StdoutLock) {
+        let step_start = std::time::Instant::now();
         if matches!(self.running_state, RunningState::Running) {
             self.life.step();
         }
+        let step_time = step_start.elapsed();
+
+        let render_start = std::time::Instant::now();
+        self.render(output);
+        let render_time = render_start.elapsed();
+
+        queue!(
+            output,
+            MoveTo(0, 0),
+            Print(&format!("Step: {:?}\n", step_time)),
+            MoveTo(0, 1),
+            Print(&format!("Render: {:?}\n", render_time)),
+            MoveTo(0, 2),
+            Print(&format!("Alive: {}\n", self.life.root.alive())),
+            MoveTo(0, 3),
+            Print(&format!("Zoom: 1/{}\n", self.pixel_scale())),
+        )
+        .unwrap();
     }
 
     pub fn pixel_scale(&self) -> i32 {
         1 << self.render_depth
     }
 
-    pub fn render(&mut self, output: &mut dyn std::io::Write) {
+    fn render(&mut self, output: &mut StdoutLock) {
         let pixel_scale = self.pixel_scale();
         let positions = self.life.cell_positions(self.render_depth);
         self.canvas.clear();

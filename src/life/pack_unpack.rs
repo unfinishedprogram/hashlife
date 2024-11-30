@@ -58,7 +58,8 @@ impl Life {
 
     pub fn cell_positions(&self, min_depth: u8) -> Vec<(i32, i32)> {
         let mut positions = Vec::new();
-        self.unpack_cells(min_depth, &mut positions, self.root, (0, 0));
+        let offset = (1 << (self.root.layer() as i32 - min_depth as i32)) / 2;
+        self.unpack_cells(min_depth, &mut positions, self.root, (-offset, -offset));
         positions
     }
 
