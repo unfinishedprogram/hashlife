@@ -1,41 +1,50 @@
-use std::io::{stdout, Write};
+use std::{
+    io::{stdout, Write},
+    time::Duration,
+};
 
 use crossterm::{
     cursor::MoveTo,
+    event::{poll, read, Event},
     queue,
-    style::Print,
-    terminal::{size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate},
+    terminal::{
+        enable_raw_mode, size, BeginSynchronizedUpdate, Clear, ClearType, EndSynchronizedUpdate,
+    },
     QueueableCommand,
 };
-use hashlife::{
-    life::{print::print_positions, Life},
-    rendering::detailed_canvas::DetailedCanvas,
-};
+use hashlife::{life::Life, rendering::life_viewer::LifeViewer};
 
 fn main() {
-    println!("Starting");
-    let mut life = Life::from_rle(include_str!("../../patterns/clock.rle"));
-    let mut canvas = DetailedCanvas::new(size().unwrap());
+    let life = Life::from_rle(include_str!("../../patterns/clock.rle"));
+    let mut life_viewer = LifeViewer::new(size().unwrap(), life);
+
     let stdout = stdout();
 
-    loop {
-        let start = std::time::Instant::now();
+    enable_raw_mode().unwrap();
 
-        life.step();
-        let deep = 10;
-        let depth = life.root.layer().max(deep) - deep;
+    loop {
+        while poll(Duration::from_millis(1)).unwrap() {
+            match read().unwrap() {
+                Event::Key(key_event) => life_viewer.on_key(key_event),
+                Event::Resize(x, y) => life_viewer.resize((x, y)),
+                _ => {}
+            }
+        }
+
+        let start = std::time::Instant::now();
+        life_viewer.step();
 
         let mut stdout = stdout.lock();
 
         stdout.queue(BeginSynchronizedUpdate).unwrap();
         stdout.queue(Clear(ClearType::All)).unwrap();
-        print_positions(&mut canvas, &mut stdout, life.cell_positions(depth as u8));
+        life_viewer.render(&mut stdout);
 
         queue!(
             stdout,
             MoveTo(0, 0),
-            Print(&format!("Alive: {}\n", life.root.alive())),
-            Print(&format!("Step time: {:?}\n", start.elapsed())),
+            // Print(&format!("Alive: {}\n", life.root.alive())),
+            // Print(&format!("Step time: {:?}\n", start.elapsed())),
             EndSynchronizedUpdate,
         )
         .unwrap();
