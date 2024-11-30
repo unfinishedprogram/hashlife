@@ -148,7 +148,7 @@ impl Life {
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use std::{collections::HashSet, i64};
+    use std::collections::HashSet;
 
     #[test]
     fn test_pack_unpack() {
