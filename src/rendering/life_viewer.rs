@@ -8,7 +8,7 @@ use crossterm::{
     terminal::disable_raw_mode,
 };
 
-use crate::life::{print::print_positions, Life};
+use crate::life::{pack_unpack::CellBounds, Life};
 
 use super::{canvas::Canvas, detailed_canvas::DetailedCanvas};
 enum RunningState {
@@ -23,9 +23,9 @@ pub struct LifeViewer {
     canvas: DetailedCanvas,
     render_depth: u8,
 
-    cell_offset_x: i32,
-    cell_offset_y: i32,
-    speed: i32,
+    cell_offset_x: i64,
+    cell_offset_y: i64,
+    speed: i64,
 }
 
 impl LifeViewer {
@@ -45,8 +45,8 @@ impl LifeViewer {
     }
 
     fn center_on_zero_zero(&mut self) {
-        self.cell_offset_x = self.pixel_scale() * (self.canvas.size().0 as i32) / 2;
-        self.cell_offset_y = self.pixel_scale() * (self.canvas.size().1 as i32) / 2;
+        self.cell_offset_x = -self.pixel_scale() * (self.canvas.size().0 as i64) / 2;
+        self.cell_offset_y = -self.pixel_scale() * (self.canvas.size().1 as i64) / 2;
     }
 
     pub fn resize(&mut self, term_size: (u16, u16)) {
@@ -74,8 +74,8 @@ impl LifeViewer {
                 if self.render_depth == u8::MIN {
                     return;
                 }
-                self.cell_offset_x -= self.pixel_scale() * (self.canvas.size().0 as i32) / 4;
-                self.cell_offset_y -= self.pixel_scale() * (self.canvas.size().1 as i32) / 4;
+                self.cell_offset_x += self.pixel_scale() * (self.canvas.size().0 as i64) / 4;
+                self.cell_offset_y += self.pixel_scale() * (self.canvas.size().1 as i64) / 4;
                 self.render_depth = self.render_depth.saturating_sub(1);
             }
             KeyCode::Char('-') => {
@@ -83,20 +83,20 @@ impl LifeViewer {
                     return;
                 }
                 self.render_depth = self.render_depth.saturating_add(1);
-                self.cell_offset_x += self.pixel_scale() * (self.canvas.size().0 as i32) / 4;
-                self.cell_offset_y += self.pixel_scale() * (self.canvas.size().1 as i32) / 4;
+                self.cell_offset_x -= self.pixel_scale() * (self.canvas.size().0 as i64) / 4;
+                self.cell_offset_y -= self.pixel_scale() * (self.canvas.size().1 as i64) / 4;
             }
             KeyCode::Char('w') => {
-                self.cell_offset_y += self.pixel_scale() * self.speed;
-            }
-            KeyCode::Char('s') => {
                 self.cell_offset_y -= self.pixel_scale() * self.speed;
             }
+            KeyCode::Char('s') => {
+                self.cell_offset_y += self.pixel_scale() * self.speed;
+            }
             KeyCode::Char('a') => {
-                self.cell_offset_x += self.pixel_scale() * self.speed;
+                self.cell_offset_x -= self.pixel_scale() * self.speed;
             }
             KeyCode::Char('d') => {
-                self.cell_offset_x -= self.pixel_scale() * self.speed;
+                self.cell_offset_x += self.pixel_scale() * self.speed;
             }
             _ => {}
         }
@@ -127,22 +127,42 @@ impl LifeViewer {
         .unwrap();
     }
 
-    pub fn pixel_scale(&self) -> i32 {
+    pub fn pixel_scale(&self) -> i64 {
         1 << self.render_depth
+    }
+
+    fn cell_bounds(&self) -> CellBounds {
+        let (width, height) = self.canvas.size();
+        let (width, height) = (
+            width as i64 * self.pixel_scale(),
+            height as i64 * self.pixel_scale(),
+        );
+
+        let (x, y) = (self.cell_offset_x, self.cell_offset_y);
+        CellBounds {
+            min_x: x,
+            min_y: y,
+            max_x: x + width,
+            max_y: y + height,
+        }
     }
 
     fn render(&mut self, output: &mut StdoutLock) {
         let pixel_scale = self.pixel_scale();
-        let positions = self.life.cell_positions(self.render_depth);
+        let positions = self
+            .life
+            .cell_positions(self.render_depth, self.cell_bounds());
+
         self.canvas.clear();
-        print_positions(
-            &mut self.canvas,
-            (
-                self.cell_offset_x / pixel_scale,
-                self.cell_offset_y / pixel_scale,
-            ),
-            positions,
-        );
+
+        let offset_x = self.cell_offset_x / pixel_scale;
+        let offset_y = self.cell_offset_y / pixel_scale;
+
+        for (x, y) in positions.iter() {
+            self.canvas
+                .set((x - offset_x) as usize, (y - offset_y) as usize);
+        }
+
         self.canvas.render(0, 0, output);
     }
 }

@@ -6,8 +6,16 @@ use super::{
     Life,
 };
 
+#[derive(Clone, Copy)]
+pub struct CellBounds {
+    pub min_x: i64,
+    pub min_y: i64,
+    pub max_x: i64,
+    pub max_y: i64,
+}
+
 impl Life {
-    pub fn from_cell_positions(max_depth: u8, points: Vec<(i32, i32)>) -> Self {
+    pub fn from_cell_positions(max_depth: u8, points: Vec<(i64, i64)>) -> Self {
         let mut life = Self::new(max_depth);
         let base_alive_id = life.add_cell(Cell::Base(BaseCell::Alive));
 
@@ -56,20 +64,50 @@ impl Life {
         life
     }
 
-    pub fn cell_positions(&self, min_depth: u8) -> Vec<(i32, i32)> {
+    pub fn cell_positions(&self, min_depth: u8, bounds: CellBounds) -> Vec<(i64, i64)> {
+        let half_width = 1 << (self.root.layer() - 1 - min_depth as usize);
         let mut positions = Vec::new();
-        let offset = (1 << (self.root.layer() as i32 - min_depth as i32)) / 2;
-        self.unpack_cells(min_depth, &mut positions, self.root, (-offset, -offset));
+
+        positions.push((0, 0));
+
+        let bound_div = 1 << min_depth as i64;
+
+        let mapped_bounds = CellBounds {
+            min_x: bounds.min_x / bound_div,
+            min_y: bounds.min_y / bound_div,
+            max_x: bounds.max_x / bound_div,
+            max_y: bounds.max_y / bound_div,
+        };
+
+        self.unpack_cells(
+            min_depth,
+            &mut positions,
+            self.root,
+            (-half_width, -half_width),
+            mapped_bounds,
+        );
         positions
     }
 
     fn unpack_cells(
         &self,
         max_depth: u8,
-        cells: &mut Vec<(i32, i32)>,
+        cells: &mut Vec<(i64, i64)>,
         cell: CellId,
-        (x, y): (i32, i32),
+        (x, y): (i64, i64),
+        bounds: CellBounds,
     ) {
+        let width = 1 << (cell.layer() - max_depth as usize);
+        let half_width = width >> 1;
+
+        if x > bounds.max_x
+            || y > bounds.max_y
+            || x + width < bounds.min_x
+            || y + width < bounds.min_y
+        {
+            return;
+        }
+
         if cell.layer() <= max_depth as usize {
             if cell.alive() > 0 {
                 cells.push((x, y));
@@ -84,18 +122,23 @@ impl Life {
             }
             Cell::Base(BaseCell::Dead) => {}
             Cell::Composite(CompositeCell { nw, ne, sw, se, .. }) => {
-                let half = 1 << (cell.depth() - 1 - max_depth);
                 if nw.alive() > 0 {
-                    self.unpack_cells(max_depth, cells, *nw, (x, y));
+                    self.unpack_cells(max_depth, cells, *nw, (x, y), bounds);
                 }
                 if ne.alive() > 0 {
-                    self.unpack_cells(max_depth, cells, *ne, (x + half, y));
+                    self.unpack_cells(max_depth, cells, *ne, (x + half_width, y), bounds);
                 }
                 if sw.alive() > 0 {
-                    self.unpack_cells(max_depth, cells, *sw, (x, y + half));
+                    self.unpack_cells(max_depth, cells, *sw, (x, y + half_width), bounds);
                 }
                 if se.alive() > 0 {
-                    self.unpack_cells(max_depth, cells, *se, (x + half, y + half));
+                    self.unpack_cells(
+                        max_depth,
+                        cells,
+                        *se,
+                        (x + half_width, y + half_width),
+                        bounds,
+                    );
                 }
             }
         }
@@ -105,15 +148,23 @@ impl Life {
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use std::collections::HashSet;
+    use std::{collections::HashSet, i64};
 
     #[test]
     fn test_pack_unpack() {
         let points = vec![(0, 0), (1, 0), (0, 1), (1, 1), (2, 2), (31, 7)];
         let life = Life::from_cell_positions(8, points.clone());
-        let unpacked = life.cell_positions(8);
+        let unpacked = life.cell_positions(
+            8,
+            CellBounds {
+                min_x: i64::MIN,
+                min_y: i64::MIN,
+                max_x: i64::MAX,
+                max_y: i64::MAX,
+            },
+        );
 
-        let expected: HashSet<(i32, i32)> = HashSet::from_iter(points);
+        let expected: HashSet<(i64, i64)> = HashSet::from_iter(points);
         let actual = HashSet::from_iter(unpacked);
         assert_eq!(expected, actual);
     }

@@ -1,6 +1,6 @@
 // Utilities convert from standard life representations to hash-life
 
-pub fn rle_to_cell_positions(rle: String, offset_x: i32, offset_y: i32) -> Vec<(i32, i32)> {
+pub fn rle_to_cell_positions(rle: String, offset_x: i64, offset_y: i64) -> Vec<(i64, i64)> {
     // Remove comments and size header
     let s: String = rle
         .lines()
@@ -47,7 +47,7 @@ pub fn rle_to_cell_positions(rle: String, offset_x: i32, offset_y: i32) -> Vec<(
                 run_length_chars += 1;
 
                 run_length *= 10;
-                run_length += n as i32;
+                run_length += n as i64;
             }
             _ => {}
         }
