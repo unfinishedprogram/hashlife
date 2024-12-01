@@ -91,9 +91,10 @@ impl Canvas for DetailedCanvas {
 
     fn render(&self, offset_x: u16, offset_y: u16, output: &mut StdoutLock) {
         let (width, height) = self.char_size();
+        let mut buffer = String::new();
 
         for y in 0..height {
-            let mut buffer = String::new();
+            buffer.clear();
             output.queue(MoveTo(offset_x, offset_y + y)).unwrap();
 
             for x in 0..width {
