@@ -1,6 +1,6 @@
 use std::io::{StdoutLock, Write};
 
-use crossterm::{cursor::MoveTo, style::Print, QueueableCommand};
+use crossterm::{cursor::MoveTo, QueueableCommand};
 
 use super::canvas::Canvas;
 
