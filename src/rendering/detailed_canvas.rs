@@ -1,3 +1,5 @@
+use std::io::{StdoutLock, Write};
+
 use crossterm::{cursor::MoveTo, style::Print, QueueableCommand};
 
 use super::canvas::Canvas;
@@ -87,18 +89,21 @@ impl Canvas for DetailedCanvas {
         }
     }
 
-    fn render(&self, offset_x: u16, offset_y: u16, output: &mut dyn std::io::Write) {
+    fn render(&self, offset_x: u16, offset_y: u16, output: &mut StdoutLock) {
         let (width, height) = self.char_size();
 
         for y in 0..height {
+            let mut buffer = String::new();
             output.queue(MoveTo(offset_x, offset_y + y)).unwrap();
 
             for x in 0..width {
                 let index = self.char_index((x, y));
                 let c = self.buffer[index];
                 let c = std::char::from_u32(Self::EMPTY_BRAIL as u32 + c as u32).unwrap();
-                output.queue(Print(c)).unwrap();
+                buffer.push(c);
             }
+
+            output.write_all(buffer.as_bytes()).unwrap()
         }
     }
 }

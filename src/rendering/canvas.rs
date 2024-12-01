@@ -1,3 +1,5 @@
+use std::io::StdoutLock;
+
 pub trait Canvas {
     fn size(&self) -> (usize, usize);
 
@@ -7,5 +9,5 @@ pub trait Canvas {
     fn set(&mut self, x: usize, y: usize);
     fn clear(&mut self);
 
-    fn render(&self, x: u16, y: u16, output: &mut dyn std::io::Write);
+    fn render(&self, x: u16, y: u16, output: &mut StdoutLock);
 }
