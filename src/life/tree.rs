@@ -8,9 +8,7 @@ impl Life {
         debug_assert_eq!(nw.layer(), sw.layer());
         debug_assert_eq!(nw.layer(), se.layer());
 
-        let new_node_layer = nw.layer() + 1;
-
-        self.add_cell(Cell::composite(new_node_layer as u8, nw, ne, sw, se))
+        self.add_cell(Cell::composite(nw, ne, sw, se))
     }
 
     pub fn centered_subnode(&mut self, id: CellId) -> CellId {

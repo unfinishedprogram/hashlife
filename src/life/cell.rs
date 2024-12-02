@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use super::cell_id::CellId;
 
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
@@ -14,7 +16,6 @@ pub enum BaseCell {
 
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct CompositeCell {
-    depth: u8,
     pub(crate) nw: CellId,
     pub(crate) ne: CellId,
     pub(crate) sw: CellId,
@@ -22,14 +23,8 @@ pub struct CompositeCell {
 }
 
 impl Cell {
-    pub fn composite(depth: u8, nw: CellId, ne: CellId, sw: CellId, se: CellId) -> Self {
-        Cell::Composite(CompositeCell {
-            depth,
-            nw,
-            ne,
-            sw,
-            se,
-        })
+    pub fn composite(nw: CellId, ne: CellId, sw: CellId, se: CellId) -> Self {
+        Cell::Composite(CompositeCell { nw, ne, sw, se })
     }
 
     pub fn as_composite(&self) -> &CompositeCell {
@@ -42,7 +37,7 @@ impl Cell {
     pub fn depth(&self) -> u8 {
         match self {
             Cell::Base(_) => 0,
-            Cell::Composite(CompositeCell { depth, .. }) => *depth,
+            Cell::Composite(CompositeCell { nw, .. }) => nw.layer() as u8 + 1,
         }
     }
 }

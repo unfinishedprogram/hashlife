@@ -51,10 +51,8 @@ impl Life {
 
     fn empty_of_layer(&mut self, layer: u8) -> CellId {
         let mut empty_id = self.add_cell(Cell::Base(cell::BaseCell::Dead));
-        for layer in 1..=layer {
-            empty_id = self.add_cell(Cell::composite(
-                layer, empty_id, empty_id, empty_id, empty_id,
-            ));
+        for _ in 1..=layer {
+            empty_id = self.add_cell(Cell::composite(empty_id, empty_id, empty_id, empty_id));
         }
         empty_id
     }
