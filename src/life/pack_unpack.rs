@@ -68,8 +68,6 @@ impl Life {
         let half_width = 1 << (self.root.layer() - 1 - min_depth as usize);
         let mut positions = Vec::new();
 
-        positions.push((0, 0));
-
         let bound_div = 1 << min_depth as i64;
 
         let mapped_bounds = CellBounds {
