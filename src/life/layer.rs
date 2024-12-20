@@ -4,6 +4,7 @@ use super::{cell::Cell, cell_id::CellId};
 
 #[derive(Clone, Debug, Default)]
 pub struct Layer {
+    pub calls: usize,
     cells: Vec<Cell>,
     cells_index_lookup: HashMap<Cell, usize>,
     next_gen: HashMap<CellId, CellId>,
@@ -15,6 +16,7 @@ impl Layer {
     }
 
     pub fn add_cell(&mut self, cell: Cell) -> usize {
+        self.calls += 1;
         if let Some(index) = self.cells_index_lookup.get(&cell) {
             return *index;
         }

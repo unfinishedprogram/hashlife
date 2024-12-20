@@ -58,20 +58,10 @@ impl Life {
     }
 
     pub fn add_cell(&mut self, cell: Cell) -> CellId {
-        let layer = cell.depth() as usize;
-        let alive = self.alive_count(&cell);
+        let layer = cell.layer() as usize;
+        let alive = cell.alive_count();
         let index = self.layers[layer].add_cell(cell);
         CellId::new(layer, index, alive)
-    }
-
-    pub fn alive_count(&self, cell: &Cell) -> usize {
-        match cell {
-            Cell::Base(cell::BaseCell::Alive) => 1,
-            Cell::Base(cell::BaseCell::Dead) => 0,
-            Cell::Composite(cell) => {
-                cell.nw.alive() + cell.ne.alive() + cell.sw.alive() + cell.se.alive()
-            }
-        }
     }
 
     pub fn get_cell(&self, cell_id: CellId) -> Option<&Cell> {
@@ -267,9 +257,9 @@ mod tests {
         let empty_1 = life.empty_of_layer(1);
         let empty_2 = life.empty_of_layer(2);
 
-        assert_eq!(life.get_cell(empty_0).unwrap().depth(), 0);
-        assert_eq!(life.get_cell(empty_1).unwrap().depth(), 1);
-        assert_eq!(life.get_cell(empty_2).unwrap().depth(), 2);
+        assert_eq!(life.get_cell(empty_0).unwrap().layer(), 0);
+        assert_eq!(life.get_cell(empty_1).unwrap().layer(), 1);
+        assert_eq!(life.get_cell(empty_2).unwrap().layer(), 2);
     }
 
     #[test]

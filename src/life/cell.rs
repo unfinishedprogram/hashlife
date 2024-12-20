@@ -34,10 +34,20 @@ impl Cell {
         }
     }
 
-    pub fn depth(&self) -> u8 {
+    pub fn layer(&self) -> u8 {
         match self {
             Cell::Base(_) => 0,
             Cell::Composite(CompositeCell { nw, .. }) => nw.layer() as u8 + 1,
+        }
+    }
+
+    pub fn alive_count(&self) -> usize {
+        match self {
+            Cell::Base(self::BaseCell::Alive) => 1,
+            Cell::Base(self::BaseCell::Dead) => 0,
+            Cell::Composite(cell) => {
+                cell.nw.alive() + cell.ne.alive() + cell.sw.alive() + cell.se.alive()
+            }
         }
     }
 }
