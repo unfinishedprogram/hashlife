@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{cell::Cell, cell_id::CellId};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Default, Clone, Debug)]
 pub struct Layer {
     pub calls: usize,
     cells: Vec<Cell>,
@@ -39,5 +39,9 @@ impl Layer {
         if let Some(Cell::Composite(cell)) = self.cells.get_mut(cell_id.index()) {
             cell.next_gen = Some(new_cell_id)
         }
+    }
+
+    pub fn calls(&self) -> usize {
+        self.calls
     }
 }
