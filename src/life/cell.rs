@@ -14,17 +14,41 @@ pub enum BaseCell {
     Dead,
 }
 
-#[derive(Hash, PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct CompositeCell {
     pub(crate) nw: CellId,
     pub(crate) ne: CellId,
     pub(crate) sw: CellId,
     pub(crate) se: CellId,
+    // Ignore for hashing / equality
+    pub(crate) next_gen: Option<CellId>,
+}
+
+impl Hash for CompositeCell {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.nw.hash(state);
+        self.ne.hash(state);
+        self.sw.hash(state);
+        self.se.hash(state);
+    }
+}
+
+impl Eq for CompositeCell {}
+impl PartialEq for CompositeCell {
+    fn eq(&self, other: &Self) -> bool {
+        self.nw == other.nw && self.ne == other.ne && self.sw == other.sw && self.se == other.se
+    }
 }
 
 impl Cell {
     pub fn composite(nw: CellId, ne: CellId, sw: CellId, se: CellId) -> Self {
-        Cell::Composite(CompositeCell { nw, ne, sw, se })
+        Cell::Composite(CompositeCell {
+            nw,
+            ne,
+            sw,
+            se,
+            next_gen: None,
+        })
     }
 
     pub fn as_composite(&self) -> &CompositeCell {

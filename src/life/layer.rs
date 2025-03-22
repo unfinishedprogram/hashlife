@@ -7,7 +7,6 @@ pub struct Layer {
     pub calls: usize,
     cells: Vec<Cell>,
     cells_index_lookup: HashMap<Cell, usize>,
-    next_gen: HashMap<CellId, CellId>,
 }
 
 impl Layer {
@@ -33,10 +32,12 @@ impl Layer {
     }
 
     pub fn get_next_gen(&self, cell_id: CellId) -> Option<&CellId> {
-        self.next_gen.get(&cell_id)
+        self.cells[cell_id.index()].as_composite().next_gen.as_ref()
     }
 
     pub fn cache_next_gen(&mut self, cell_id: CellId, new_cell_id: CellId) {
-        self.next_gen.insert(cell_id, new_cell_id);
+        if let Some(Cell::Composite(cell)) = self.cells.get_mut(cell_id.index()) {
+            cell.next_gen = Some(new_cell_id)
+        }
     }
 }
