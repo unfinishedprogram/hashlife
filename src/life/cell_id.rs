@@ -1,18 +1,18 @@
 #[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(transparent)]
-struct CellIndex(usize);
+struct CellIndex(u32);
 
 impl CellIndex {
-    pub fn new(layer: u16, index: usize) -> Self {
-        CellIndex(((layer as usize) << 48) | index)
+    pub fn new(layer: u8, index: usize) -> Self {
+        CellIndex(((layer as u32) << 24) | index as u32)
     }
 
     pub fn index(&self) -> usize {
-        self.0 & 0x0000_ffff_ffff_ffff
+        (self.0 & 0x00ff_ffff) as usize
     }
 
     pub fn layer(&self) -> usize {
-        (self.0 >> 48) & 0xffff
+        ((self.0 >> 24) & 0xff) as usize
     }
 }
 
@@ -25,7 +25,7 @@ pub struct CellId {
 impl CellId {
     pub fn new(layer: usize, index: usize, alive: usize) -> Self {
         CellId {
-            index: CellIndex::new(layer as u16, index),
+            index: CellIndex::new(layer as u8, index),
             alive,
         }
     }
