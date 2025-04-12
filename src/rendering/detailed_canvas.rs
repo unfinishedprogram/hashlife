@@ -1,4 +1,4 @@
-use std::io::{StdoutLock, Write};
+use std::io::Write;
 
 use crossterm::{cursor::MoveTo, QueueableCommand};
 
@@ -89,13 +89,13 @@ impl Canvas for DetailedCanvas {
         }
     }
 
-    fn render(&self, offset_x: u16, offset_y: u16, output: &mut StdoutLock) {
+    fn render(&self, output: &mut impl Write) {
         let (width, height) = self.char_size();
         let mut buffer = String::new();
 
         for y in 0..height {
             buffer.clear();
-            output.queue(MoveTo(offset_x, offset_y + y)).unwrap();
+            output.queue(MoveTo(0, y)).unwrap();
 
             for x in 0..width {
                 let index = self.char_index((x, y));

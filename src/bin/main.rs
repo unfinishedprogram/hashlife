@@ -37,7 +37,7 @@ fn main() {
         stdout.queue(Clear(ClearType::All)).unwrap();
         life_viewer.step(&mut stdout);
 
-        queue!(stdout, MoveTo(0, 0), EndSynchronizedUpdate,).unwrap();
+        queue!(stdout, MoveTo(0, 0), EndSynchronizedUpdate).unwrap();
 
         stdout.flush().unwrap();
     }

@@ -1,4 +1,4 @@
-use std::io::StdoutLock;
+use std::io::{StdoutLock, Write};
 
 use crossterm::{
     cursor::MoveTo,
@@ -183,7 +183,7 @@ impl LifeViewer {
         }
     }
 
-    fn render(&mut self, output: &mut StdoutLock) {
+    pub fn render(&mut self, output: &mut impl Write) {
         let pixel_scale = self.pixel_scale();
         let positions = self
             .life
@@ -199,6 +199,6 @@ impl LifeViewer {
                 .set((x - offset_x) as usize, (y - offset_y) as usize);
         }
 
-        self.canvas.render(0, 0, output);
+        self.canvas.render(output);
     }
 }
