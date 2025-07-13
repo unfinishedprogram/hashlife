@@ -13,6 +13,8 @@ use layer::Layer;
 pub struct Life {
     pub root: CellId,
     pub layers: Vec<Layer>,
+    pub base_alive: CellId,
+    pub base_dead: CellId,
 }
 
 impl Life {
@@ -22,9 +24,17 @@ impl Life {
         for _ in 0..max_depth {
             layers.push(Layer::default());
         }
+
+        let base_alive = Cell::Base(cell::BaseCell::Alive);
+        let base_dead = Cell::Base(cell::BaseCell::Dead);
+        let base_alive = CellId::new(0, layers[0].add_cell(base_alive), 1);
+        let base_dead = CellId::new(0, layers[0].add_cell(base_dead), 0);
+
         let mut res = Life {
             layers,
             root: CellId::new(0, 0, 0),
+            base_alive,
+            base_dead,
         };
 
         let root = res.empty_of_layer(0);
@@ -46,7 +56,7 @@ impl Life {
             total += layer.size();
             println!("Layer {}: {}", i, layer.size());
         }
-        println!("Total: {}", total);
+        println!("Total: {total}");
     }
 
     fn empty_of_layer(&mut self, layer: u8) -> CellId {
@@ -163,8 +173,8 @@ impl Life {
         debug_assert_eq!(sw.layer(), 1);
         debug_assert_eq!(se.layer(), 1);
 
-        let base_alive = self.add_cell(Cell::Base(cell::BaseCell::Alive));
-        let base_dead = self.add_cell(Cell::Base(cell::BaseCell::Dead));
+        let base_alive = self.base_alive;
+        let base_dead = self.base_dead;
 
         let nw = self.get_cell(nw).unwrap().as_composite();
         let ne = self.get_cell(ne).unwrap().as_composite();
@@ -173,28 +183,28 @@ impl Life {
 
         let cells = [
             [
-                nw.nw == base_alive,
-                nw.ne == base_alive,
-                ne.nw == base_alive,
-                ne.ne == base_alive,
+                nw.nw.alive() > 0,
+                nw.ne.alive() > 0,
+                ne.nw.alive() > 0,
+                ne.ne.alive() > 0,
             ],
             [
-                nw.sw == base_alive,
-                nw.se == base_alive,
-                ne.sw == base_alive,
-                ne.se == base_alive,
+                nw.sw.alive() > 0,
+                nw.se.alive() > 0,
+                ne.sw.alive() > 0,
+                ne.se.alive() > 0,
             ],
             [
-                sw.nw == base_alive,
-                sw.ne == base_alive,
-                se.nw == base_alive,
-                se.ne == base_alive,
+                sw.nw.alive() > 0,
+                sw.ne.alive() > 0,
+                se.nw.alive() > 0,
+                se.ne.alive() > 0,
             ],
             [
-                sw.sw == base_alive,
-                sw.se == base_alive,
-                se.sw == base_alive,
-                se.se == base_alive,
+                sw.sw.alive() > 0,
+                sw.se.alive() > 0,
+                se.sw.alive() > 0,
+                se.se.alive() > 0,
             ],
         ];
 
