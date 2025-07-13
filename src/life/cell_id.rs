@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 #[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(transparent)]
 struct CellIndex(u32);
@@ -16,10 +18,16 @@ impl CellIndex {
     }
 }
 
-#[derive(Hash, PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct CellId {
-    alive: usize,
     index: CellIndex,
+    alive: usize,
+}
+
+impl Hash for CellId {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.index.hash(state);
+    }
 }
 
 impl CellId {
